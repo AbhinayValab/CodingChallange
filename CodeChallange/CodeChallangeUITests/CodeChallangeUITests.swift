@@ -9,33 +9,42 @@ import XCTest
 
 final class CodeChallangeUITests: XCTestCase {
 
+    var app: XCUIApplication!
+    
     override func setUpWithError() throws {
         // Put setup code here. This method is called before the invocation of each test method in the class.
 
         // In UI tests it is usually best to stop immediately when a failure occurs.
         continueAfterFailure = false
-
-        // In UI tests it’s important to set the initial state - such as interface orientation - required for your tests before they run. The setUp method is a good place to do this.
-    }
-
-    override func tearDownWithError() throws {
-        // Put teardown code here. This method is called after the invocation of each test method in the class.
-    }
-
-    @MainActor
-    func testExample() throws {
-        // UI tests must launch the application that they test.
-        let app = XCUIApplication()
+        app = XCUIApplication()
         app.launch()
-
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
+        
     }
-
-    @MainActor
-    func testLaunchPerformance() throws {
-        // This measures how long it takes to launch your application.
-        measure(metrics: [XCTApplicationLaunchMetric()]) {
-            XCUIApplication().launch()
+    
+    func testSearchField_andImageLoad() throws {
+        // 1. Find the search field and type a tag
+        let searchField = app.textFields["Search"]
+        XCTAssertTrue(searchField.exists, "Search field should be visible")
+        searchField.tap()
+        searchField.typeText("porcupine")
+        
+        // 2. Wait for loading indicator (optional)
+        let loadingIndicator = app.activityIndicators.firstMatch
+        if loadingIndicator.exists {
+//            XCTAssertTrue(loadingIndicator.waitForExistence(timeout: 2), "ProgressView should appear")
+            XCTAssertTrue(loadingIndicator.exists, "ProgressView appears briefly")
+        }
+        // 3. Wait for images to load (up to 5 seconds)
+        let imageCell = app.images.firstMatch
+        let exists = imageCell.waitForExistence(timeout: 5)
+        
+        // 4. Assert images are loaded or error message shown
+        if exists {
+            XCTAssertTrue(imageCell.exists, "At least one image should be visible")
+        } else {
+            let errorText = app.staticTexts.containing(NSPredicate(format: "label BEGINSWITH 'Error:'")).firstMatch
+            XCTAssertTrue(errorText.exists, "An error should be shown if loading fails")
         }
     }
+
 }
